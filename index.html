@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>한길 — 외국인 운전면허</title>
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#D6691E" />
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            cream:           '#F2EDE2',
+            'cream-deep':    '#E8E0CE',
+            ink:             '#14110D',
+            'ink-soft':      '#4A4438',
+            muted:           '#8A8170',
+            line:            '#D9D0BC',
+            navy:            '#14315E',
+            saffron:         '#D6691E',
+            paper:           '#FFFFFF',
+            'dark-bg':       '#0A0D14',
+            'dark-text':     '#F5F2EC',
+            accent:          '#D6691E',
+            'accent-bright': '#ED7820',
+          },
+          fontFamily: {
+            pretendard: ['Pretendard', 'sans-serif'],
+            display:    ['Bricolage Grotesque', 'serif'],
+            mono:       ['JetBrains Mono', 'monospace'],
+            sinhala:    ['Noto Sans Sinhala', 'sans-serif'],
+          },
+        },
+      },
+    }
+  </script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,700&family=JetBrains+Mono:wght@400;600&family=Noto+Sans+Sinhala:wght@400;600&display=swap" rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css" rel="stylesheet" />
+
+  <style>
+    body { font-family: 'Pretendard', sans-serif; }
+
+    /* 오로라 블롭 */
+    .blob { position:absolute; border-radius:50%; filter:blur(80px); opacity:0.45; animation:drift 8s ease-in-out infinite alternate; }
+    .blob1 { width:320px; height:320px; background:radial-gradient(circle,#D6691E,transparent 70%); top:-60px; left:-80px; animation-delay:0s; }
+    .blob2 { width:260px; height:260px; background:radial-gradient(circle,#6B3F8A,transparent 70%); bottom:20px; right:-60px; animation-delay:-3s; }
+    .blob3 { width:200px; height:200px; background:radial-gradient(circle,#A8331C,transparent 70%); top:40%; left:30%; animation-delay:-5s; }
+    @keyframes drift {
+      from { transform:translate(0,0) scale(1); }
+      to   { transform:translate(20px,30px) scale(1.08); }
+    }
+
+    .screen { display:none; }
+    .screen.active { display:flex; }
+
+    /* 선택지 버튼 상태 */
+    .choice-btn { transition: all 0.2s ease; }
+    .choice-btn.correct  { background:#D1FAE5; border-color:#10B981; }
+    .choice-btn.wrong    { background:#FEE2E2; border-color:#EF4444; }
+    .choice-btn.disabled { pointer-events:none; opacity:0.5; }
+  </style>
+</head>
+
+<body class="min-h-screen overflow-hidden">
+
+  <!-- ── 스플래시 ── -->
+  <div id="splash" class="screen active fixed inset-0 flex-col items-center justify-center bg-dark-bg overflow-hidden">
+    <div class="blob blob1"></div>
+    <div class="blob blob2"></div>
+    <div class="blob blob3"></div>
+    <div class="relative z-10 flex flex-col items-center gap-4">
+      <p class="font-display text-7xl font-bold text-dark-text leading-none">한<span class="text-accent">길</span></p>
+      <p class="font-mono text-xs tracking-[0.3em] text-muted uppercase">HAN GIL</p>
+      <p class="text-dark-text/60 text-sm mt-4">한국 운전면허 · 외국인을 위한</p>
+    </div>
+    <div class="relative z-10 flex gap-2 mt-16">
+      <span class="w-1.5 h-1.5 rounded-full bg-accent animate-bounce" style="animation-delay:0s"></span>
+      <span class="w-1.5 h-1.5 rounded-full bg-accent animate-bounce" style="animation-delay:0.15s"></span>
+      <span class="w-1.5 h-1.5 rounded-full bg-accent animate-bounce" style="animation-delay:0.3s"></span>
+    </div>
+  </div>
+
+  <!-- ── 홈 화면 ── -->
+  <div id="home" class="screen fixed inset-0 flex-col bg-cream overflow-y-auto">
+    <div class="w-full max-w-[480px] mx-auto flex flex-col min-h-full px-5 pb-10">
+      <header class="flex items-center justify-between pt-12 pb-6">
+        <div>
+          <p class="font-display text-3xl font-bold text-ink leading-none">한<span class="text-saffron">길</span></p>
+          <p class="font-mono text-[10px] tracking-[0.25em] text-muted mt-0.5">HAN GIL</p>
+        </div>
+        <button class="w-10 h-10 rounded-full bg-cream-deep flex items-center justify-center text-ink-soft text-lg">⚙</button>
+      </header>
+
+      <!-- 진도 카드 -->
+      <div class="bg-navy rounded-2xl px-5 py-4 mb-6 flex items-center justify-between">
+        <div>
+          <p class="text-white/60 text-xs mb-1">오늘의 진도</p>
+          <p class="text-white text-2xl font-bold"><span id="homeCount">0</span> <span class="text-white/40 text-base font-normal">/ <span id="homeTotal">997</span></span></p>
+          <p id="homeMsg" class="text-white/50 text-xs mt-1">학습을 시작해보세요</p>
+        </div>
+        <div class="w-16 h-16 rounded-full border-4 border-saffron/30 flex items-center justify-center">
+          <span id="homePct" class="text-saffron font-mono text-sm font-bold">0%</span>
+        </div>
+      </div>
+
+      <p class="text-muted text-xs font-mono tracking-widest mb-3 uppercase">학습 시작</p>
+
+      <button onclick="startStudy()" class="w-full bg-paper border border-line rounded-2xl px-5 py-5 mb-3 flex items-center gap-4 text-left shadow-sm active:scale-[0.97] transition-transform">
+        <div class="w-12 h-12 rounded-xl bg-saffron/10 flex items-center justify-center text-2xl flex-shrink-0">📖</div>
+        <div class="flex-1">
+          <p class="text-ink font-bold text-base">순차 학습</p>
+          <p class="text-muted text-sm mt-0.5">1번부터 997번까지 차례로</p>
+        </div>
+        <span class="text-saffron text-xl">›</span>
+      </button>
+
+      <button onclick="showScreen('hall')" class="w-full bg-paper border border-line rounded-2xl px-5 py-5 mb-6 flex items-center gap-4 text-left shadow-sm active:scale-[0.97] transition-transform">
+        <div class="w-12 h-12 rounded-xl bg-saffron/10 flex items-center justify-center text-2xl flex-shrink-0">🏆</div>
+        <div class="flex-1">
+          <p class="text-ink font-bold text-base">명예의 전당</p>
+          <p class="text-muted text-sm mt-0.5">번역에 기여한 통역사들</p>
+        </div>
+        <span class="text-saffron text-xl">›</span>
+      </button>
+
+      <p class="text-muted text-xs font-mono tracking-widest mb-3 uppercase">준비 중</p>
+      <div class="grid grid-cols-2 gap-3">
+        <div class="bg-cream-deep border border-line rounded-2xl px-4 py-4 flex flex-col gap-2 opacity-50">
+          <span class="text-xl">📝</span><p class="text-ink-soft font-bold text-sm">모의고사 40제</p><p class="text-muted text-xs">준비 중</p>
+        </div>
+        <div class="bg-cream-deep border border-line rounded-2xl px-4 py-4 flex flex-col gap-2 opacity-50">
+          <span class="text-xl">❌</span><p class="text-ink-soft font-bold text-sm">오답노트</p><p class="text-muted text-xs">준비 중</p>
+        </div>
+        <div class="bg-cream-deep border border-line rounded-2xl px-4 py-4 flex flex-col gap-2 opacity-50">
+          <span class="text-xl">⭐</span><p class="text-ink-soft font-bold text-sm">즐겨찾기</p><p class="text-muted text-xs">준비 중</p>
+        </div>
+        <div class="bg-cream-deep border border-line rounded-2xl px-4 py-4 flex flex-col gap-2 opacity-50">
+          <span class="text-xl">📊</span><p class="text-ink-soft font-bold text-sm">통계</p><p class="text-muted text-xs">준비 중</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── 학습 화면 ── -->
+  <div id="study" class="screen fixed inset-0 flex-col bg-cream overflow-y-auto">
+    <div class="w-full max-w-[480px] mx-auto flex flex-col min-h-full px-5 pb-10">
+
+      <!-- 상단 바 -->
+      <div class="flex items-center justify-between pt-12 pb-4">
+        <button onclick="showScreen('home')" class="flex items-center gap-1 text-ink-soft text-sm">
+          <span class="text-lg">←</span> 홈
+        </button>
+        <p id="qCounter" class="font-mono text-xs text-muted">1 / 997</p>
+      </div>
+
+      <!-- 진도 바 -->
+      <div class="h-1 bg-cream-deep rounded-full mb-6 overflow-hidden">
+        <div id="progressBar" class="h-full bg-saffron rounded-full transition-all duration-500" style="width:0%"></div>
+      </div>
+
+      <!-- 문제 번호 배지 -->
+      <p id="qBadge" class="font-mono text-xs text-saffron mb-2">문제 001</p>
+
+      <!-- 문제 텍스트 카드 -->
+      <div class="bg-paper border border-line rounded-2xl px-5 py-5 mb-2 shadow-sm">
+        <p id="qText" class="text-ink text-base leading-relaxed"></p>
+      </div>
+
+      <!-- 번역 보기 버튼 -->
+      <button id="transBtn" onclick="toggleTranslation()" class="flex items-center gap-1 text-muted text-xs mb-2 ml-1">
+        <span id="transArrow">▼</span> 번역 보기
+      </button>
+
+      <!-- 모국어 번역 패널 (기본 숨김) -->
+      <div id="transPanel" class="hidden bg-cream-deep border border-line rounded-2xl px-5 py-4 mb-4">
+        <p id="transQText" class="font-sinhala text-ink-soft text-sm leading-relaxed"></p>
+      </div>
+
+      <!-- 선택지 -->
+      <div id="choiceList" class="flex flex-col gap-3 mb-5"></div>
+
+      <!-- 피드백 카드 (정답 선택 후 표시) -->
+      <div id="feedback" class="hidden bg-paper border border-line rounded-2xl px-5 py-4 mb-5 shadow-sm">
+        <p id="feedbackIcon" class="text-xl mb-1"></p>
+        <p id="feedbackMsg" class="text-ink-soft text-sm font-bold mb-2"></p>
+        <p id="feedbackExp" class="font-sinhala text-ink-soft text-sm leading-relaxed"></p>
+      </div>
+
+      <!-- 다음 문제 버튼 -->
+      <button id="nextBtn" onclick="nextQuestion()" class="hidden w-full py-4 rounded-full text-white font-bold text-base"
+        style="background: linear-gradient(135deg, #ED7820, #D6691E)">
+        다음 문제 →
+      </button>
+
+    </div>
+  </div>
+
+  <!-- ── 명예의 전당 ── -->
+  <div id="hall" class="screen fixed inset-0 flex-col bg-dark-bg overflow-y-auto">
+    <div class="blob blob1"></div>
+    <div class="blob blob2"></div>
+    <div class="blob blob3"></div>
+
+    <div class="relative z-10 w-full max-w-[480px] mx-auto px-5 pb-12">
+
+      <!-- 상단 바 -->
+      <div class="flex items-center pt-12 pb-8">
+        <button onclick="showScreen('home')" class="flex items-center gap-1 text-dark-text/60 text-sm">
+          <span class="text-lg">←</span> 홈
+        </button>
+      </div>
+
+      <!-- 타이틀 -->
+      <div class="mb-8">
+        <p class="font-mono text-xs tracking-[0.25em] text-accent mb-2 uppercase">Hall of Fame</p>
+        <p class="font-display text-4xl font-bold text-dark-text leading-tight">명예의<br>전당</p>
+        <p class="text-dark-text/50 text-sm mt-3 leading-relaxed">한길의 번역을 완성해준 통역사들.<br>이 앱은 그들 없이 존재할 수 없습니다.</p>
+      </div>
+
+      <!-- 통역사 카드 목록 -->
+      <div id="translatorList" class="flex flex-col gap-4"></div>
+
+    </div>
+  </div>
+
+  <script>
+    /* ── 통역사 데이터 (나중에 Sheet에서 fetch로 교체) ── */
+    const translators = [
+      {
+        name: 'R.M Suneth Hansa',
+        lang: '신할라어',
+        flag: '🇱🇰',
+        country: 'Sri Lanka',
+        quote: '스리랑카 친구들이 한국 운전면허를 쉽게 딸 수 있도록.',
+        reviewed: 997,
+        photo: null,   // 나중에 Drive URL 연결
+      },
+      {
+        name: 'Anoj Adhikari',
+        lang: '신할라어',
+        flag: '🇱🇰',
+        country: 'Sri Lanka',
+        quote: '함께 만들어가는 다리.',
+        reviewed: 0,
+        photo: null,
+      },
+    ];
+
+    function renderHall() {
+      const list = document.getElementById('translatorList');
+      list.innerHTML = '';
+      translators.forEach((t, idx) => {
+        const initials = t.name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
+        const card = document.createElement('div');
+        card.style.cssText = 'background:rgba(23,29,40,0.65);border:1px solid rgba(214,105,30,0.15);backdrop-filter:blur(12px);border-radius:20px;padding:20px;';
+        card.innerHTML = `
+          <div style="display:flex;align-items:center;gap:16px;">
+            <!-- 프로필 사진 / 이니셜 -->
+            <div style="width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,#ED7820,#6B3F8A);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-family:'JetBrains Mono',monospace;font-size:16px;font-weight:700;color:#fff;">
+              ${t.photo ? `<img src="${t.photo}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">` : initials}
+            </div>
+            <div style="flex:1;min-width:0;">
+              <div style="display:flex;align-items:center;gap:6px;margin-bottom:2px;">
+                <span style="font-size:14px;">${t.flag}</span>
+                <span style="color:#F5F2EC;font-weight:700;font-size:15px;">${t.name}</span>
+              </div>
+              <p style="color:#8A8170;font-size:12px;margin-bottom:6px;">${t.lang} · ${t.country}</p>
+              <p style="color:#F5F2EC;opacity:0.7;font-size:13px;line-height:1.5;">"${t.quote}"</p>
+            </div>
+          </div>
+          ${t.reviewed > 0 ? `
+          <div style="margin-top:14px;padding-top:14px;border-top:1px solid rgba(214,105,30,0.12);display:flex;align-items:center;gap:6px;">
+            <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#D6691E;font-weight:600;">${t.reviewed.toLocaleString()}문항 검수 완료</span>
+          </div>` : `
+          <div style="margin-top:14px;padding-top:14px;border-top:1px solid rgba(214,105,30,0.12);">
+            <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#8A8170;">검수 진행 중</span>
+          </div>`}
+        `;
+        list.appendChild(card);
+      });
+    }
+
+    /* ── 샘플 문제 (나중에 JSON으로 교체) ── */
+    /* ── 상태 ── */
+    let questions = [];
+    let currentIdx = 0;
+    let answered = false;
+    let transOpen = false;
+
+    /* ── 데이터 로드 ── */
+    async function loadQuestions() {
+      const res = await fetch('data/questions_si.json');
+      if (!res.ok) throw new Error('fetch failed');
+      return await res.json();
+    }
+
+    /* ── 진도 저장/불러오기 ── */
+    function saveProgress() {
+      localStorage.setItem('hangil_idx', currentIdx);
+    }
+
+    function getSavedIdx() {
+      return parseInt(localStorage.getItem('hangil_idx') || '0', 10);
+    }
+
+    function updateHomeProgress() {
+      const saved = getSavedIdx();
+      const total = questions.length || 997;
+      const pct = Math.round((saved / total) * 100);
+      document.getElementById('homeCount').textContent = saved;
+      document.getElementById('homeTotal').textContent = total;
+      document.getElementById('homePct').textContent = pct + '%';
+      document.getElementById('homeMsg').textContent =
+        saved === 0 ? '학습을 시작해보세요' :
+        saved >= total ? '전체 완료! 수고했어요 🎉' :
+        `${total - saved}문제 남았어요`;
+    }
+
+    /* ── 화면 전환 ── */
+    function showScreen(id) {
+      document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+      document.getElementById(id).classList.add('active');
+      document.body.style.background = (id === 'hall') ? '#0A0D14' : '#F2EDE2';
+      if (id === 'hall') renderHall();
+      if (id === 'home') updateHomeProgress();
+    }
+
+    async function startStudy() {
+      transOpen = false;
+      showScreen('study');
+
+      // 아직 로드 안 됐으면 fetch
+      if (questions.length === 0) {
+        document.getElementById('qText').textContent = '문제를 불러오는 중...';
+        document.getElementById('choiceList').innerHTML = '';
+        document.getElementById('qBadge').textContent = '';
+        try {
+          questions = await loadQuestions();
+        } catch (e) {
+          document.getElementById('qText').textContent = '데이터를 불러오지 못했습니다. 새로고침 해주세요.';
+          return;
+        }
+      }
+
+      // 저장된 진도에서 이어서 시작
+      currentIdx = getSavedIdx();
+      if (currentIdx >= questions.length) currentIdx = 0;
+      renderQuestion();
+    }
+
+    /* ── 번역 토글 ── */
+    function toggleTranslation() {
+      transOpen = !transOpen;
+      document.getElementById('transPanel').classList.toggle('hidden', !transOpen);
+      document.getElementById('transArrow').textContent = transOpen ? '▲' : '▼';
+      // 선택지 모국어 자막 토글
+      document.querySelectorAll('.trans-sub').forEach(el => {
+        el.classList.toggle('hidden', !transOpen);
+      });
+    }
+
+    /* ── 문제 렌더 ── */
+    function renderQuestion() {
+      const q = questions[currentIdx];
+      answered = false;
+      transOpen = false;
+
+      // 카운터 + 진도
+      document.getElementById('qCounter').textContent = `${currentIdx + 1} / ${questions.length}`;
+      document.getElementById('qBadge').textContent = `문제 ${String(q.id).padStart(3, '0')}`;
+      document.getElementById('progressBar').style.width = `${(currentIdx / questions.length) * 100}%`;
+
+      // 한국어 문제 (항상 표시)
+      document.getElementById('qText').textContent = q.ko_q;
+
+      // 번역 패널 초기화
+      document.getElementById('transPanel').classList.add('hidden');
+      document.getElementById('transArrow').textContent = '▼';
+      document.getElementById('transQText').textContent = q.si_q;
+
+      // 선택지 (한국어 + 모국어 자막)
+      const list = document.getElementById('choiceList');
+      list.innerHTML = '';
+      q.ko_c.forEach((c, i) => {
+        const btn = document.createElement('button');
+        btn.className = 'choice-btn w-full bg-paper border border-line rounded-2xl px-4 py-4 flex items-start gap-3 text-left';
+        btn.innerHTML = `
+          <span class="font-mono text-xs text-muted w-5 flex-shrink-0 mt-0.5">${i + 1}</span>
+          <span class="flex flex-col gap-0.5">
+            <span class="text-ink text-sm leading-relaxed">${c}</span>
+            <span class="trans-sub hidden font-sinhala text-muted text-xs leading-relaxed">${q.si_c[i]}</span>
+          </span>
+        `;
+        btn.onclick = () => selectAnswer(i + 1);
+        list.appendChild(btn);
+      });
+
+      // 피드백 + 다음 버튼 숨기기
+      document.getElementById('feedback').classList.add('hidden');
+      document.getElementById('nextBtn').classList.add('hidden');
+    }
+
+    /* ── 답 선택 ── */
+    function selectAnswer(chosen) {
+      if (answered) return;
+      answered = true;
+
+      const q = questions[currentIdx];
+      const correct = q.answer;
+      const btns = document.querySelectorAll('.choice-btn');
+
+      btns.forEach((btn, i) => {
+        btn.classList.add('disabled');
+        if (i + 1 === correct) btn.classList.add('correct');
+        else if (i + 1 === chosen) btn.classList.add('wrong');
+      });
+
+      // 피드백
+      const isRight = chosen === correct;
+      document.getElementById('feedbackIcon').textContent = isRight ? '✅' : '❌';
+      document.getElementById('feedbackMsg').textContent = isRight ? '정답입니다!' : `오답 — 정답은 ${correct}번`;
+      document.getElementById('feedbackExp').textContent = q.si_exp;
+      document.getElementById('feedback').classList.remove('hidden');
+      document.getElementById('nextBtn').classList.remove('hidden');
+
+      // 마지막 문제면 버튼 텍스트 변경
+      if (currentIdx === questions.length - 1) {
+        document.getElementById('nextBtn').textContent = '학습 완료 🎉';
+      }
+    }
+
+    /* ── 다음 문제 ── */
+    function nextQuestion() {
+      if (currentIdx < questions.length - 1) {
+        currentIdx++;
+        saveProgress();
+        renderQuestion();
+      } else {
+        saveProgress();
+        showScreen('home');
+      }
+    }
+
+    /* ── 스플래시 3초 후 홈으로 ── */
+    setTimeout(() => {
+      const splash = document.getElementById('splash');
+      splash.style.opacity = '0';
+      splash.style.transition = 'opacity 0.6s ease';
+      setTimeout(() => showScreen('home'), 600);
+    }, 3000);
+  </script>
+
+</body>
+</html>

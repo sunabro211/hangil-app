@@ -295,10 +295,11 @@
 
     /* ── 데이터 로드 ── */
     async function loadQuestions() {
-      const res = await fetch('data/questions_si.json');
-      if (!res.ok) throw new Error('fetch failed');
-      return await res.json();
-    }
+  const res = await fetch('data/questions_si.json');
+  if (!res.ok) throw new Error('fetch failed');
+  const data = await res.json();
+  return data.questions;
+}
 
     /* ── 진도 저장/불러오기 ── */
     function saveProgress() {
@@ -377,24 +378,24 @@
       document.getElementById('progressBar').style.width = `${(currentIdx / questions.length) * 100}%`;
 
       // 한국어 문제 (항상 표시)
-      document.getElementById('qText').textContent = q.ko_q;
+      document.getElementById('qText').textContent = q.ko_question;
 
       // 번역 패널 초기화
       document.getElementById('transPanel').classList.add('hidden');
       document.getElementById('transArrow').textContent = '▼';
-      document.getElementById('transQText').textContent = q.si_q;
+      document.getElementById('transQText').textContent = q.si_question;
 
       // 선택지 (한국어 + 모국어 자막)
       const list = document.getElementById('choiceList');
       list.innerHTML = '';
-      q.ko_c.forEach((c, i) => {
+      q.ko_options.forEach((c, i) => {
         const btn = document.createElement('button');
         btn.className = 'choice-btn w-full bg-paper border border-line rounded-2xl px-4 py-4 flex items-start gap-3 text-left';
         btn.innerHTML = `
           <span class="font-mono text-xs text-muted w-5 flex-shrink-0 mt-0.5">${i + 1}</span>
           <span class="flex flex-col gap-0.5">
             <span class="text-ink text-sm leading-relaxed">${c}</span>
-            <span class="trans-sub hidden font-sinhala text-muted text-xs leading-relaxed">${q.si_c[i]}</span>
+            <span class="trans-sub hidden font-sinhala text-muted text-xs leading-relaxed">${q.si_options[i]}</span>
           </span>
         `;
         btn.onclick = () => selectAnswer(i + 1);
@@ -425,7 +426,7 @@
       const isRight = chosen === correct;
       document.getElementById('feedbackIcon').textContent = isRight ? '✅' : '❌';
       document.getElementById('feedbackMsg').textContent = isRight ? '정답입니다!' : `오답 — 정답은 ${correct}번`;
-      document.getElementById('feedbackExp').textContent = q.si_exp;
+      document.getElementById('feedbackExp').textContent = q.si_explanation;
       document.getElementById('feedback').classList.remove('hidden');
       document.getElementById('nextBtn').classList.remove('hidden');
 

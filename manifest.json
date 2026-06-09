@@ -2,7 +2,7 @@
   "name": "한길 — 외국인 운전면허",
   "short_name": "한길",
   "description": "한국 운전면허 학과시험 다국어 학습 앱",
-  "start_url": "/hangil/",
+  "start_url": "/hangil-app/",
   "display": "standalone",
   "background_color": "#0A0D14",
   "theme_color": "#D6691E",

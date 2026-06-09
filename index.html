@@ -134,9 +134,9 @@
         <div class="bg-cream-deep border border-line rounded-2xl px-4 py-4 flex flex-col gap-2 opacity-50">
           <span class="text-xl">📝</span><p class="text-ink-soft font-bold text-sm">모의고사 40제</p><p class="text-muted text-xs">준비 중</p>
         </div>
-        <div class="bg-cream-deep border border-line rounded-2xl px-4 py-4 flex flex-col gap-2 opacity-50">
-          <span class="text-xl">❌</span><p class="text-ink-soft font-bold text-sm">오답노트</p><p class="text-muted text-xs">준비 중</p>
-        </div>
+        <button onclick="startWrongStudy()" class="bg-paper border border-line rounded-2xl px-4 py-4 flex flex-col gap-2 text-left active:scale-[0.97] transition-transform">
+          <span class="text-xl">❌</span><p class="text-ink font-bold text-sm">오답노트</p><p class="text-muted text-xs">틀린 문제 다시 풀기</p>
+        </button>
         <div class="bg-cream-deep border border-line rounded-2xl px-4 py-4 flex flex-col gap-2 opacity-50">
           <span class="text-xl">⭐</span><p class="text-ink-soft font-bold text-sm">즐겨찾기</p><p class="text-muted text-xs">준비 중</p>
         </div>
@@ -422,6 +422,16 @@
         else if (i + 1 === chosen) btn.classList.add('wrong');
       });
 
+      // 오답 저장 / 정답이면 오답노트에서 제거
+      if (chosen !== correct) {
+        saveWrong(q.id);
+      } else {
+        removeWrong(q.id);
+      }
+      // 오답노트에서 제거 (맞히면)
+      if (chosen === correct) {
+        removeWrong(q.id);
+      }
       // 피드백
       const isRight = chosen === correct;
       document.getElementById('feedbackIcon').textContent = isRight ? '✅' : '❌';
@@ -446,6 +456,39 @@
         saveProgress();
         showScreen('home');
       }
+    }
+    /* ── 오답노트 ── */
+    function saveWrong(id) {
+      const wrongs = getWrongs();
+      if (!wrongs.includes(id)) {
+        wrongs.push(id);
+        localStorage.setItem('hangil_wrong', JSON.stringify(wrongs));
+      }
+    }
+    function removeWrong(id) {
+      const wrongs = getWrongs().filter(w => w !== id);
+      localStorage.setItem('hangil_wrong', JSON.stringify(wrongs));
+    }
+
+    function getWrongs() {
+      return JSON.parse(localStorage.getItem('hangil_wrong') || '[]');
+    }
+
+    function startWrongStudy() {
+      const wrongs = getWrongs();
+      if (wrongs.length === 0) {
+        alert('오답이 없어요! 😊');
+        return;
+      }
+      if (questions.length === 0) {
+        alert('학습을 먼저 시작해주세요.');
+        return;
+      }
+      const wrongQuestions = questions.filter(q => wrongs.includes(q.id));
+      questions = wrongQuestions;
+      currentIdx = 0;
+      showScreen('study');
+      renderQuestion();
     }
 
     /* ── 스플래시 3초 후 홈으로 ── */

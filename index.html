@@ -131,9 +131,9 @@
 
       <p class="text-muted text-xs font-mono tracking-widest mb-3 uppercase">준비 중</p>
       <div class="grid grid-cols-2 gap-3">
-        <div class="bg-cream-deep border border-line rounded-2xl px-4 py-4 flex flex-col gap-2 opacity-50">
-          <span class="text-xl">📝</span><p class="text-ink-soft font-bold text-sm">모의고사 40제</p><p class="text-muted text-xs">준비 중</p>
-        </div>
+        <button onclick="startExam()" class="bg-paper border border-line rounded-2xl px-4 py-4 flex flex-col gap-2 text-left active:scale-[0.97] transition-transform">
+          <span class="text-xl">📝</span><p class="text-ink font-bold text-sm">모의고사 40제</p><p class="text-muted text-xs">랜덤 40문제 도전</p>
+        </button>
         <button onclick="startWrongStudy()" class="bg-paper border border-line rounded-2xl px-4 py-4 flex flex-col gap-2 text-left active:scale-[0.97] transition-transform">
           <span class="text-xl">❌</span><p class="text-ink font-bold text-sm">오답노트</p><p class="text-muted text-xs">틀린 문제 다시 풀기</p>
         </button>
@@ -427,10 +427,7 @@
         saveWrong(q.id);
       } else {
         removeWrong(q.id);
-      }
-      // 오답노트에서 제거 (맞히면)
-      if (chosen === correct) {
-        removeWrong(q.id);
+        if (examMode) examScore++;
       }
       // 피드백
       const isRight = chosen === correct;
@@ -446,16 +443,34 @@
       }
     }
 
-    /* ── 다음 문제 ── */
     function nextQuestion() {
       if (currentIdx < questions.length - 1) {
         currentIdx++;
-        saveProgress();
+        if (!examMode) saveProgress();
         renderQuestion();
       } else {
-        saveProgress();
-        showScreen('home');
+        if (examMode) {
+          showExamResult();
+        } else {
+          saveProgress();
+          showScreen('home');
+        }
       }
+    }
+
+    function showExamResult() {
+      examMode = false;
+      const pct = Math.round((examScore / examTotal) * 100);
+      const pass = examScore >= 30;
+      alert(
+        (pass ? '🎉 합격!' : '😥 불합격') + '\n\n' +
+        `${examScore} / ${examTotal} 정답\n` +
+        `정답률: ${pct}%\n\n` +
+        (pass ? '수고했어요! 실전도 문제없어요 💪' : '조금만 더 공부하면 합격할 수 있어요!')
+      );
+      // 원래 문제 복원
+      questions = [];
+      showScreen('home');
     }
     /* ── 오답노트 ── */
     function saveWrong(id) {
@@ -487,6 +502,35 @@
       const wrongQuestions = questions.filter(q => wrongs.includes(q.id));
       questions = wrongQuestions;
       currentIdx = 0;
+      showScreen('study');
+      renderQuestion();
+    }
+    /* ── 모의고사 ── */
+    let examMode = false;
+    let examScore = 0;
+    let examTotal = 40;
+
+    async function startExam() {
+      // 문제 로드 안 됐으면 fetch
+      if (questions.length === 0) {
+        try {
+          const data = await fetch('data/questions_si.json');
+          const json = await data.json();
+          questions = json.questions;
+        } catch(e) {
+          alert('데이터를 불러오지 못했습니다.');
+          return;
+        }
+      }
+
+      // 랜덤 40개 뽑기
+      const shuffled = [...questions].sort(() => Math.random() - 0.5);
+      questions = shuffled.slice(0, 40);
+      currentIdx = 0;
+      examMode = true;
+      examScore = 0;
+      examTotal = 40;
+
       showScreen('study');
       renderQuestion();
     }

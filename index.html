@@ -499,7 +499,12 @@
     function startWrongStudy() {
       const wrongs = getWrongs();
       if (wrongs.length === 0) {
-        alert('오답이 없어요! 😊');
+        showModal('❌ 오답노트', `
+          <div class="text-center py-4">
+            <p class="text-5xl mb-4">🎉</p>
+            <p class="text-ink-soft text-sm leading-relaxed">오답이 없어요!<br>모든 문제를 맞혔어요 😊</p>
+          </div>
+        `);
         return;
       }
       if (questions.length === 0) {

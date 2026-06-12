@@ -536,10 +536,60 @@
       btn.style.color = isFav ? '#D6691E' : '#8A8170';
     }
 
+    /* ── 커스텀 모달 ── */
+    function showModal(title, bodyHTML) {
+      document.getElementById('modalTitle').textContent = title;
+      document.getElementById('modalBody').innerHTML = bodyHTML;
+      document.getElementById('modal').classList.remove('hidden');
+    }
+
+    function closeModal() {
+      document.getElementById('modal').classList.add('hidden');
+    }
+
+    /* ── 통계 ── */
+    function showStats() {
+      const total = 997;
+      const progress = getSavedIdx();
+      const wrongs = getWrongs().length;
+      const favs = getFavorites().length;
+      const pct = Math.round((progress / total) * 100);
+
+      showModal('📊 나의 학습 통계', `
+        <div class="flex flex-col gap-3">
+          <div class="bg-cream rounded-2xl px-4 py-3 flex items-center justify-between">
+            <span class="text-ink-soft text-sm">📖 학습 진도</span>
+            <span class="font-mono font-bold text-ink">${progress} <span class="text-muted font-normal">/ ${total}</span></span>
+          </div>
+          <div class="h-2 bg-cream-deep rounded-full overflow-hidden">
+            <div class="h-full bg-saffron rounded-full" style="width:${pct}%"></div>
+          </div>
+          <p class="text-center font-mono text-saffron font-bold text-2xl">${pct}%</p>
+          <div class="grid grid-cols-2 gap-2 mt-1">
+            <div class="bg-red-50 border border-red-100 rounded-2xl px-4 py-3 text-center">
+              <p class="text-2xl font-bold text-red-400">${wrongs}</p>
+              <p class="text-xs text-red-300 mt-0.5">오답노트</p>
+            </div>
+            <div class="bg-amber-50 border border-amber-100 rounded-2xl px-4 py-3 text-center">
+              <p class="text-2xl font-bold text-amber-400">${favs}</p>
+              <p class="text-xs text-amber-300 mt-0.5">즐겨찾기</p>
+            </div>
+          </div>
+          <p class="text-center text-muted text-xs mt-1">${progress >= total ? '🎉 전체 완료! 수고했어요!' : `${total - progress}문제 남았어요`}</p>
+        </div>
+      `);
+    }
+
+    /* ── 즐겨찾기 없을 때 모달 ── */
     function startFavStudy() {
       const favs = getFavorites();
       if (favs.length === 0) {
-        alert('즐겨찾기한 문제가 없어요! ☆ 버튼으로 추가해보세요.');
+        showModal('⭐ 즐겨찾기', `
+          <div class="text-center py-4">
+            <p class="text-5xl mb-4">☆</p>
+            <p class="text-ink-soft text-sm leading-relaxed">아직 즐겨찾기한 문제가 없어요.<br>문제 풀 때 ☆ 버튼으로 추가해보세요!</p>
+          </div>
+        `);
         return;
       }
       if (questions.length === 0) {
@@ -551,23 +601,6 @@
       currentIdx = 0;
       showScreen('study');
       renderQuestion();
-    }
-
-    /* ── 통계 ── */
-    function showStats() {
-      const total = 997;
-      const progress = getSavedIdx();
-      const wrongs = getWrongs().length;
-      const favs = getFavorites().length;
-      const pct = Math.round((progress / total) * 100);
-
-      alert(
-        '📊 나의 학습 통계\n\n' +
-        `📖 진도: ${progress} / ${total} (${pct}%)\n` +
-        `❌ 오답노트: ${wrongs}문제\n` +
-        `⭐ 즐겨찾기: ${favs}문제\n\n` +
-        (progress >= total ? '🎉 전체 완료! 수고했어요!' : `${total - progress}문제 남았어요`)
-      );
     }
     /* ── 모의고사 ── */
     let examMode = false;
@@ -607,6 +640,15 @@
       setTimeout(() => showScreen('home'), 600);
     }, 3000);
   </script>
+  <!-- ── 커스텀 모달 ── -->
+  <div id="modal" class="hidden fixed inset-0 z-50 flex items-center justify-center px-6" style="background:rgba(0,0,0,0.5);">
+    <div class="bg-paper rounded-3xl px-6 py-7 w-full max-w-sm shadow-2xl">
+      <p id="modalTitle" class="font-display text-xl font-bold text-ink mb-4"></p>
+      <div id="modalBody" class="mb-6"></div>
+      <button onclick="closeModal()" class="w-full py-3 rounded-full text-white font-bold text-sm"
+        style="background:linear-gradient(135deg,#ED7820,#D6691E)">확인</button>
+    </div>
+  </div>
 
 </body>
 </html>
